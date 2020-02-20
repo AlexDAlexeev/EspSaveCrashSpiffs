@@ -3,6 +3,14 @@
   and stack trace to flash in case of ESP8266 crash.
   Please check repository below for details
 
+  Repository: https://github.com/AlexDAlexeev/EspSaveCrashSpiffs
+  File: EspSaveCrashSpiffs.h
+  Revision: 0.1.0
+  Date: 20-Feb-2020
+  Author: Alex.D.Alexeev
+
+  based on code of
+
   Repository: https://github.com/brainelectronics/EspSaveCrashSpiffs
   File: EspSaveCrashSpiffs.h
   Revision: 0.1.0
@@ -39,28 +47,15 @@
 #ifndef _ESPSAVECRASHSPIFFS_H_
 #define _ESPSAVECRASHSPIFFS_H_
 
+#pragma once
+
 #include "Arduino.h"
 #include "FS.h"
 #include "user_interface.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-// the crash log file MUST end with '-1.log' to iterate correctly
-#define CRASHFILEPATH       "/"
-#define CRASHFILENAME       "crashLog-1.log"
-#define CRASHFILEPATTERN    "crashLog"
-#define CRASHFILEEXTENSION  "log"
-
-#ifndef LASTCRASHFILEPATH
-#define LASTCRASHFILEPATH "/lastName.txt"
-#endif
-
 // define the usage of SPIFFS crash log before anything else
 // #define SPIFFS_CRASH_LOG  1
 // #define EEPROM_CRASH_LOG
-
 
 /**
  * Structure of the single crash data set
@@ -79,34 +74,55 @@
  *     ...
  */
 
-class EspSaveCrashSpiffs
-{
-  public:
-    EspSaveCrashSpiffs(char *pcAlternativeFilePath=0);
+#ifndef DEFAULT_CRASHFILEPREFIX
+#define DEFAULT_CRASHFILEPREFIX PSTR("crashLog-")
+#endif
 
-    bool removeFile(uint32_t ulFileNumber);
-    bool readFileToBuffer(const char* fileName, char* userBuffer);
+#ifndef DEFAULT_CRASHFILESUFFIX
+#define DEFAULT_CRASHFILESUFFIX PSTR(".log")
+#endif
+
+class EspSaveCrashSpiffs {
+public:
+    typedef std::function<void(uint32_t fileNumber, const char* fileName)> OnCrashLogFileFound;
+
+    EspSaveCrashSpiffs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = SPIFFS);
+
+    const String& getLogFileDirectory() const { return _fileDirectory; }
+    const String& getLogFilePrefix() const { return _filePrefix; }
+    const String& getLogFileSuffix() const { return _fileSuffix; }
+
+    void setLogFileNameParams(const char* directory, const char* prefix, const char* suffix);
+    void setLogFileNameParams(const String& directory, const String& prefix, const String& suffix) { setLogFileNameParams(directory.c_str(), prefix.c_str(), suffix.c_str()); }
+
+    const String& getCrashLogFilePath() const { return _crashLogFile; }
+    const String& getLastCrashLogFilePath() const { return _lastLogFile; }
+
+    bool removeFile(uint32_t fileNumber);
+    bool readFile(uint32_t fileNumber, char* buffer, size_t bufferSize);
+    bool print(uint32_t fileNumber, Print& outDevice = Serial);
+
+    uint32_t count();
+    void iterateCrashLogFiles(OnCrashLogFileFound callback);
+
+    bool readFile(const char* fileName, char* buffer, size_t bufferSize);
     bool print(const char* fileName, Print& outDevice = Serial);
-    uint32_t count(char *dirName, char *pattern);
-    uint32_t getNumberOfFiles(char* dirName);
-    uint32_t getLongestFileName(char* dirName);
-    void getFileList(char* dirName, char** ppcGivenArray, uint8_t ubNumberOfFiles);
-    bool checkFreeSpace(const uint32_t ulFileSize);
-    uint32_t getFreeSpace();
-    const char *getLogFileName();
-    void getLastLogFileName(char* fileContent);
-    bool checkFile(const char* theFileName, const char* openMode);
-    void setLogFileName(char* fileName);
-  private:
-    const char* _get_from_string(const char *theString, const char thePattern);
-    const char* _get_file_extension(const char *fileName);
-    void _extract_file_name(const char *name, char *fileName);
-    uint8_t _starts_with(const char *a, const char *b);
-    uint8_t _ends_with(const char *a, const char *b);
-    void _find_file_name(uint8_t nextOrLatest, char* nextFileName, const char* directoryName, const char* filePattern, const char* fileExtension);
+
+    FS& _fs;
+private:
+    String _fileDirectory;
+    String _filePrefix;
+    String _fileSuffix;
+    String _crashLogFile;
+    String _lastLogFile;
+
+    void _renewLogFiles();
+    void _getNextFileName(char* nextFileName, bool findNextName = true);
+    void _makeFileName(char* fileName, uint32_t fileNumber);
+    bool _checkFile(const char* theFileName, const char* openMode);
+    uint32_t _getNumberOfNameMatch(const String& fileName);
 };
 
-void saveToSpiffsLog(char *content);
-void saveToSpiffsFile(char *content, const char *fileName);
+extern EspSaveCrashSpiffs SaveCrashSpiffs;
 
 #endif
