@@ -46,16 +46,7 @@ extern "C" {
 // include Arduino Filesystem lib
 #include <FS.h>
 
-// use the default file name defined in EspSaveCrashSpiffs.h
-EspSaveCrashSpiffs SaveCrashSpiffs(0);
-
-// NOT TESTED
-// set a custom file name for the error log
-// EspSaveCrashSpiffs SaveCrashSpiffs("/newLogFileName.log");
-// or use the dedicated function
-// SaveCrashSpiffs.setLogFileName("/newLogFileName.log");
-
-char *_serialReadContent;
+char _serialReadContent[100];
 
 void setup(void)
 {
@@ -72,9 +63,6 @@ void setup(void)
 
   // start SPIFFS
   SPIFFS.begin();
-
-  // allocate memory for serial reading content
-  _serialReadContent = (char*)calloc(100, sizeof(char));
 
   // print help menu
   printHelp();
@@ -121,7 +109,7 @@ void loop(void)
         switch (*_serialReadContent)
         {
           // switch by ascii
-          case 48:  // '0'
+          case '0':
             // force error by dividing by zero
             Serial.println("Attempting to divide by zero ...");
 
@@ -131,7 +119,7 @@ void loop(void)
             Serial.print("Result = ");
             Serial.println(result);
             break;
-          case 101: // 'e'
+          case 'e':
             // force error by reading a null pointer value
             Serial.println("Attempting to read through a pointer to no object ...");
 
@@ -141,39 +129,39 @@ void loop(void)
             // attempt to read a value through a null pointer
             Serial.print(*nullPointer);
             break;
-          case 98:  // 'b'
+          case 'b':
             // put content of last crash log file to buffer and print buffer
             printLogToBuffer();
             break;
-          case 99:  // 'c'
+          case 'c':
             // count number of files with some pattern
             countNumberOfFiles();
             break;
-          case 100: // 'd'
+          case 'd':
             // delete some file
             deleteSomeFile();
             break;
-          case 102: // 'f'
+          case 'f':
             // print the directory informations
             printDirectoryInfo();
             break;
-          case 103: // 'g'
+          case 'g':
             // print the list of files
             printFileList();
             break;
-          case 104: // 'h'
+          case 'h':
             // print the help menu
             printHelp();
             break;
-          case 105: // 'i'
+          case 'i':
             // print filesystem space info
-            printFilesystemInfo();
+            //printFilesystemInfo();
             break;
-          case 108: // 'l'
+          case 'l':
             // print the last crash log filename
             printLastCrashLogName();
             break;
-          case 112: // 'p'
+          case 'p':
             // print the last crash log directly to serial
             printLogToSerial();
             break;
@@ -182,12 +170,8 @@ void loop(void)
         }
       }
     }
-    // free allocated space
-    // free(_serialReadContent);
-
     // print empty line for better overview
     Serial.println();
-    // Serial.println();
   }
 }
 
@@ -196,7 +180,7 @@ void loop(void)
  */
 void printHelp()
 {
-  Serial.printf("Saving crash informations to '%s'\n", SaveCrashSpiffs.getLogFileName());
+  Serial.printf("Saving crash informations to '%s'\n", SaveCrashSpiffs.getCrashLogFilePath().c_str());
 
   Serial.println("Press a key + <enter>");
   Serial.println("0 : attempt to divide by zero");
@@ -204,7 +188,7 @@ void printHelp()
 
   Serial.println("b : store latest crash information to buffer and print buffer");
   Serial.println("c : print number of crash files");
-  Serial.printf("d : remove default crash info file '%s'\n", SaveCrashSpiffs.getLogFileName());
+  Serial.printf("d : remove default crash info file '%s'\n", SaveCrashSpiffs.getCrashLogFilePath().c_str());
   Serial.printf("d123 : remove file number '123' of the directory '/'\n");
   Serial.println("f : print all filenames and their size");
   Serial.println("g : print all filenames as list");
@@ -265,21 +249,16 @@ void printFileOfIndex(uint8_t givenFileNumber)
  */
 void printLogToSerial()
 {
-  // allocate some space for the filename
-  char* _lastCrashFileName;
-  _lastCrashFileName = (char*)calloc(255, sizeof(char));
-
   // get the last filename
-  SaveCrashSpiffs.getLastLogFileName(_lastCrashFileName);
+  const String& _lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
 
-  Serial.printf("Name of last log file: '%s'\n", _lastCrashFileName);
+  Serial.print("Name of last log file: '");
+  Serial.print(_lastCrashFileName);
+  Serial.println("'");
 
   Serial.println("--- BEGIN of crash file ---");
-  SaveCrashSpiffs.print(_lastCrashFileName);
+  SaveCrashSpiffs.print(_lastCrashFileName.c_str());
   Serial.println("--- END of crash file ---");
-
-  // free the allocated space
-  free(_lastCrashFileName);
 }
 
 /**
@@ -287,28 +266,14 @@ void printLogToSerial()
  */
 void printLastCrashLogName()
 {
-  // allocate some space for the filename
-  char* _lastCrashFileName;
-  _lastCrashFileName = (char*)calloc(255, sizeof(char));
-
   // get the last filename
-  SaveCrashSpiffs.getLastLogFileName(_lastCrashFileName);
+  const String& _lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
 
-  Serial.printf("Name of last log file: '%s'\n", _lastCrashFileName);
-
-  // free the allocated space
-  free(_lastCrashFileName);
+  Serial.print("Name of last log file: '");
+  Serial.print(_lastCrashFileName);
+  Serial.println("'");
 }
 
-/**
- * @brief      Prints information about the filesystem.
- */
-void printFilesystemInfo()
-{
-  Serial.printf("Remaining space on SPIFFS: %d byte\n", SaveCrashSpiffs.getFreeSpace());
-  Serial.printf("Will additional 1024 byte fit to SPIFFS? %s\n", SaveCrashSpiffs.checkFreeSpace(1024) ? "True" : "False");
-  Serial.printf("Will additional 4MB (4194394 byte) fit to SPIFFS? %s\n", SaveCrashSpiffs.checkFreeSpace(4194394) ? "True" : "False");
-}
 
 /**
  * @brief      Counts the number of files and prints to serial.
@@ -316,7 +281,7 @@ void printFilesystemInfo()
 void countNumberOfFiles()
 {
   // find numbers of '.log' files in directory '/'
-  uint32_t ulNumberOfFiles = SaveCrashSpiffs.count((char*)"/", (char*)".log");
+  uint32_t ulNumberOfFiles = SaveCrashSpiffs.count();
   Serial.printf("Found %d files in directory '/' ending with '.log'\n", ulNumberOfFiles);
 
   // uint32_t ubNumberOfFiles = SaveCrashSpiffs.getNumberOfFiles((char*)"/");
@@ -330,14 +295,11 @@ void countNumberOfFiles()
  */
 void printLogToBuffer()
 {
-  // allocate some space for the filename
-  char* _lastCrashFileName;
-  _lastCrashFileName = (char*)calloc(255, sizeof(char));
-
   // get the last filename
-  SaveCrashSpiffs.getLastLogFileName(_lastCrashFileName);
-
-  Serial.printf("Name of last log file: '%s'\n", _lastCrashFileName);
+  const String& _lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
+  Serial.print("Name of last log file: '");
+  Serial.print(_lastCrashFileName);
+  Serial.println("'");
 
   // open the file in reading mode
   File theLogFile = SPIFFS.open(_lastCrashFileName, "r");
@@ -354,10 +316,10 @@ void printLogToBuffer()
   {
     // create buffer for file content with the size of the file+1
     char *_crashFileContent;
-    _crashFileContent = (char*)calloc(_crashFileSize+1, sizeof(char));
+    _crashFileContent = reinterpret_cast<char*>(malloc(_crashFileSize+1));
 
     // read the file content to the buffer
-    SaveCrashSpiffs.readFileToBuffer(_lastCrashFileName, _crashFileContent);
+    SaveCrashSpiffs.readFile(_lastCrashFileName.c_str(), _crashFileContent, _crashFileSize+1);
 
     Serial.println("--- BEGIN of crash file ---");
     Serial.print(_crashFileContent);
@@ -368,99 +330,22 @@ void printLogToBuffer()
   }
   else
   {
-    // in case not enough RAM is available to calloc the whole file size
-    char* _errorContent = (char*)calloc(255, sizeof(char));
-
-    // print error message in case of not enought RAM for this file
-    sprintf(_errorContent, "Error reading file '%s' to buffer. %d byte of RAM is not enough to read %d byte of file content", _lastCrashFileName, _ulFreeHeap, _crashFileSize);
-
-    // print error message in case of not enought RAM
-    Serial.println(_errorContent);
-
-    // free the allocated space
-    free(_errorContent);
+      Serial.print("Error reading file '");
+      Serial.print(_lastCrashFileName);
+      Serial.print("' to buffer.");
+      Serial.print(_ulFreeHeap);
+      Serial.print(" byte of RAM is not enough to read ");
+      Serial.print(_crashFileSize);
+      Serial.println(" byte of file content");
   }
-
-  // free the allocated space
-  free(_lastCrashFileName);
 }
 
 void printFileList()
 {
-  uint8_t i;
-  char* theDirectory = (char*)"/";
-
-  // count total number of files in specified directory
-  uint8_t ubNumberOfFiles = SaveCrashSpiffs.getNumberOfFiles(theDirectory);
-
-  // find number of chars of longest filename to allocate as less as needed
-  uint8_t ubLongestFileName = SaveCrashSpiffs.getLongestFileName(theDirectory);
-
-  // create array for file names
-  char* pcFileList[ubNumberOfFiles];
-
-  // get free heap/RAM of the system
-  uint32_t _ulFreeHeap = system_get_free_heap_size();
-
-  // calculate required heap
-  uint32_t _ulRequiredHeap = (ubLongestFileName * sizeof(char))* ubNumberOfFiles;
-
-  // check if file size is smaller than available RAM
-  if (_ulFreeHeap > (_ulRequiredHeap+1))
-  {
-    // allocate space for the file list
-    for (i = 0; i < ubNumberOfFiles; i++)
-    {
-      pcFileList[i] = (char*)calloc(ubLongestFileName, sizeof(char));
-
-      /*
-      // this will not fail as we checked free heap a priori
-      // try to allocate space
-      if ((pcFileList[i] = (char*)calloc(ubLongestFileName, sizeof(char))) == NULL)
-      {
-        // if it failes
-        Serial.printf("Unable to allocate any more memory. Only space for %d/%d \n", i, ubNumberOfFiles);
-
-        // work with most possible number of files
-        ubNumberOfFiles = i-1;
-
-        break;
-      }
-      */
-    }
-
-    // pointer to file list/array
-    char** ppcFileList = pcFileList;
-
-    Serial.printf("Filling the allocated array with %d file names\n", ubNumberOfFiles);
-    SaveCrashSpiffs.getFileList(theDirectory, ppcFileList, ubNumberOfFiles);
-
-    Serial.printf("List of files in directory '%s'\n", theDirectory);
-    for (uint8_t i = 0; i < ubNumberOfFiles; i++)
-    {
-      Serial.printf("#%d: %s\n", i+1, ppcFileList[i]);
-    }
-
-    // file list should be free'd at the end
-    for (i = 0; i < ubNumberOfFiles; i++)
-    {
-      free(pcFileList[i]);
-    }
-  }
-  else
-  {
-    // in case not enough RAM is available to calloc the whole file size
-    char* _errorContent = (char*)calloc(255, sizeof(char));
-
-    // print error message in case of not enought RAM for this file
-    sprintf(_errorContent, "Error reading file list to buffer. %d byte of RAM is not enough to read %d byte of file list content", _ulFreeHeap, _ulRequiredHeap);
-
-    // print error message in case of not enought RAM
-    Serial.println(_errorContent);
-
-    // free the allocated space
-    free(_errorContent);
-  }
+    Serial.println("Directory '" + SaveCrashSpiffs.getLogFileDirectory() + "' content:");
+    SaveCrashSpiffs.iterateCrashLogFiles([&](uint32_t fileNumber, const char* fileName) {
+        Serial.println(String(fileNumber) + ":" + String(fileName));
+    });
 }
 
 /**
@@ -475,15 +360,13 @@ void deleteSomeFile()
 
   // if the next character(s) is/are number
   // e.g. if 'd' is followed by a number, e.g. 'd12'
-  if (atoi((_serialReadContent+1)))
-  {
-    // convert '12' to 12
-    uint32_t ubFileNumberToRemove = atoi((_serialReadContent+1));
+  uint32_t ubFileNumberToRemove = strtoul(_serialReadContent + 1, nullptr, 10);
+  if (ubFileNumberToRemove) {
+      // convert '12' to 12
+      Serial.printf("Remove file #%d\n", ubFileNumberToRemove);
 
-    Serial.printf("Remove file #%d\n", ubFileNumberToRemove);
-
-    // remove the file e.g. #12
-    _bRemoveResult = SaveCrashSpiffs.removeFile(ubFileNumberToRemove);
+      // remove the file e.g. #12
+      _bRemoveResult = SaveCrashSpiffs.removeFile(ubFileNumberToRemove);
   }
   else
   {
@@ -494,11 +377,11 @@ void deleteSomeFile()
   // check result of action
   if (_bRemoveResult)
   {
-    Serial.printf("Removed file successfully\n");
+    Serial.println("Removed file successfully");
   }
   else
   {
-    Serial.printf("Failed to remove file\n");
+    Serial.println("Failed to remove file");
   }
 }
 
