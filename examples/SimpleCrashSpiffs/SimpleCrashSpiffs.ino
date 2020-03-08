@@ -188,17 +188,15 @@ void printHelp()
 
   Serial.println("b : store latest crash information to buffer and print buffer");
   Serial.println("c : print number of crash files");
-  Serial.printf("d : remove default crash info file '%s'\n", SaveCrashSpiffs.getCrashLogFilePath().c_str());
+  Serial.print("d : remove last crash info file '"); Serial.print(SaveCrashSpiffs.getCrashLogFilePath()); Serial.println("'");
   Serial.printf("d123 : remove file number '123' of the directory '/'\n");
   Serial.println("f : print all filenames and their size");
   Serial.println("g : print all filenames as list");
   Serial.println("h : print this help menu");
-  Serial.println("i : print info of filesystem");
   Serial.println("l : print filename of latest crash log");
   Serial.println("p : print latest crash information");
 
   Serial.println("Enter a number + <enter> to print the content of that file. Use 'f' to get a list of all files in the root directory");
-  // Serial.println();
 }
 
 /**
@@ -282,7 +280,7 @@ void countNumberOfFiles()
 {
   // find numbers of '.log' files in directory '/'
   uint32_t ulNumberOfFiles = SaveCrashSpiffs.count();
-  Serial.printf("Found %d files in directory '/' ending with '.log'\n", ulNumberOfFiles);
+  Serial.printf("Found %d files in directory '/' matching '%s*%s'\n", ulNumberOfFiles, SaveCrashSpiffs.getLogFilePrefix().c_str(), SaveCrashSpiffs.getLogFileSuffix().c_str());
 
   // uint32_t ubNumberOfFiles = SaveCrashSpiffs.getNumberOfFiles((char*)"/");
   // Serial.printf("Found %d files in directory '/'\n", ulNumberOfFiles);

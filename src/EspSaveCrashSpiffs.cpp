@@ -275,7 +275,9 @@ bool EspSaveCrashSpiffs::removeFile(uint32_t fileNumber)
 
     // if there is a filenumber given, remove this
     if (_fs.exists(fileName)) {
-        return _fs.remove(fileName);
+        bool res =  _fs.remove(fileName);
+        _renewLogFiles();
+        return res;
     }
     return false;
 }
