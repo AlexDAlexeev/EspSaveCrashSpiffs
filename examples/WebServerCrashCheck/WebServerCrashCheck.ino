@@ -33,7 +33,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-extern "C" {
+extern "C"
+{
 #include "user_interface.h"
 }
 
@@ -72,15 +73,16 @@ void setup(void)
 
   // credentials will be added to onboard WiFi settings
   WiFiMulti.addAP(ssid, password);
-  // // you have to wait until WiFi.status() == WL_CONNECTED
-  // // before starting MDNS and the webserver
-  // WiFi.begin(ssid, password);
-  // while (WiFi.status() != WL_CONNECTED)
-  // {
-  //   delay(500);
-  //   Serial.print(".");
-  // }
-  // Serial.println(" connected");
+
+  // you have to wait until WiFi.status() == WL_CONNECTED
+  // before starting MDNS and the webserver
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println(" connected");
 
   // create AccessPoint with custom network name and password
   WiFi.softAP(accessPointSsid, accessPointPassword);
@@ -140,46 +142,45 @@ void loop(void)
 
     switch (inChar)
     {
-      case '0':
-        Serial.println("Attempting to divide by zero ...");
-        int result, zero;
-        zero = 0;
-        result = 1 / zero;
-        Serial.print("Result = ");
-        Serial.println(result);
-        break;
-      case 'e':
-        Serial.println("Attempting to read through a pointer to no object ...");
-        int* nullPointer;
-        nullPointer = NULL;
-        // null pointer dereference - read
-        // attempt to read a value through a null pointer
-        Serial.print(*nullPointer);
-        break;
-      case 'p':
-        printLogToSerial();
-        break;
-      case 'b':
-        printLogToBuffer();
-        break;
-      case 'i':
-        // print the IP address of the http server
-        if (performOnce == 1)
-        {
-          Serial.printf("Connected to '%s' with IP address: %s\n", ssid, WiFi.localIP().toString().c_str());
-        }
-        else
-        {
-          Serial.printf("Connection to network '%s' not yet established\n", ssid);
-        }
-        Serial.printf("Connect to AccessPoint '%s' at IP address: %s\n", accessPointSsid, WiFi.softAPIP().toString().c_str());
-        break;
-      default:
-        break;
+    case '0':
+      Serial.println("Attempting to divide by zero ...");
+      int result, zero;
+      zero = 0;
+      result = 1 / zero;
+      Serial.print("Result = ");
+      Serial.println(result);
+      break;
+    case 'e':
+      Serial.println("Attempting to read through a pointer to no object ...");
+      int *nullPointer;
+      nullPointer = NULL;
+      // null pointer dereference - read
+      // attempt to read a value through a null pointer
+      Serial.print(*nullPointer);
+      break;
+    case 'p':
+      printLogToSerial();
+      break;
+    case 'b':
+      printLogToBuffer();
+      break;
+    case 'i':
+      // print the IP address of the http server
+      if (performOnce == 1)
+      {
+        Serial.printf("Connected to '%s' with IP address: %s\n", ssid, WiFi.localIP().toString().c_str());
+      }
+      else
+      {
+        Serial.printf("Connection to network '%s' not yet established\n", ssid);
+      }
+      Serial.printf("Connect to AccessPoint '%s' at IP address: %s\n", accessPointSsid, WiFi.softAPIP().toString().c_str());
+      break;
+    default:
+      break;
     }
   }
 }
-
 
 /**
  * @brief      Put the latest log file content to buffer and print it.
@@ -188,46 +189,46 @@ void loop(void)
  */
 void printLogToBuffer()
 {
-    // get the last filename
-    const String& _lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
-    Serial.print("Name of last log file: '");
+  // get the last filename
+  const String &_lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
+  Serial.print("Name of last log file: '");
+  Serial.print(_lastCrashFileName);
+  Serial.println("'");
+
+  // open the file in reading mode
+  File theLogFile = SPIFFS.open(_lastCrashFileName, "r");
+
+  // get the size of the file
+  size_t _crashFileSize = theLogFile.size();
+  theLogFile.close();
+
+  // get free heap/RAM of the system
+  uint32_t _ulFreeHeap = system_get_free_heap_size();
+
+  // check if file size is smaller than available RAM
+  if (_ulFreeHeap > _crashFileSize)
+  {
+    // create buffer for file content with the size of the file+1
+    std::vector<char> _crashFileContent(_crashFileSize + 1);
+    std::fill(_crashFileContent.begin(), _crashFileContent.end(), 0);
+
+    // read the file content to the buffer
+    SaveCrashSpiffs.readFile(_lastCrashFileName.c_str(), _crashFileContent.data(), _crashFileSize + 1);
+
+    Serial.println("--- BEGIN of crash file ---");
+    Serial.print(_crashFileContent.data());
+    Serial.println("--- END of crash file ---");
+  }
+  else
+  {
+    Serial.print("Error reading file '");
     Serial.print(_lastCrashFileName);
-    Serial.println("'");
-
-    // open the file in reading mode
-    File theLogFile = SPIFFS.open(_lastCrashFileName, "r");
-
-    // get the size of the file
-    size_t _crashFileSize = theLogFile.size();
-    theLogFile.close();
-
-    // get free heap/RAM of the system
-    uint32_t _ulFreeHeap = system_get_free_heap_size();
-
-    // check if file size is smaller than available RAM
-    if (_ulFreeHeap > _crashFileSize) {
-        // create buffer for file content with the size of the file+1
-        char* _crashFileContent;
-        _crashFileContent = reinterpret_cast<char*>(malloc(_crashFileSize + 1));
-
-        // read the file content to the buffer
-        SaveCrashSpiffs.readFile(_lastCrashFileName.c_str(), _crashFileContent, _crashFileSize + 1);
-
-        Serial.println("--- BEGIN of crash file ---");
-        Serial.print(_crashFileContent);
-        Serial.println("--- END of crash file ---");
-
-        // free the allocated space
-        free(_crashFileContent);
-    } else {
-        Serial.print("Error reading file '");
-        Serial.print(_lastCrashFileName);
-        Serial.print("' to buffer.");
-        Serial.print(_ulFreeHeap);
-        Serial.print(" byte of RAM is not enough to read ");
-        Serial.print(_crashFileSize);
-        Serial.println(" byte of file content");
-    }
+    Serial.print("' to buffer.");
+    Serial.print(_ulFreeHeap);
+    Serial.print(" byte of RAM is not enough to read ");
+    Serial.print(_crashFileSize);
+    Serial.println(" byte of file content");
+  }
 }
 
 /**
@@ -235,16 +236,16 @@ void printLogToBuffer()
  */
 void printLogToSerial()
 {
-    // get the last filename
-    const String& _lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
+  // get the last filename
+  const String &_lastCrashFileName = SaveCrashSpiffs.getLastCrashLogFilePath();
 
-    Serial.print("Name of last log file: '");
-    Serial.print(_lastCrashFileName);
-    Serial.println("'");
+  Serial.print("Name of last log file: '");
+  Serial.print(_lastCrashFileName);
+  Serial.println("'");
 
-    Serial.println("--- BEGIN of crash file ---");
-    SaveCrashSpiffs.print(_lastCrashFileName.c_str());
-    Serial.println("--- END of crash file ---");
+  Serial.println("--- BEGIN of crash file ---");
+  SaveCrashSpiffs.print(_lastCrashFileName.c_str());
+  Serial.println("--- END of crash file ---");
 }
 
 /**
@@ -255,43 +256,44 @@ void handleRoot()
   server.send(200, "text/html", "<html><body>Hello from ESP<br><a href='/log' target='_blank'>Latest crash Log</a><br><a href='/list' target='_blank'>List all files in root directory</a><br><a href='/file?path=/crashLog-2.log' target='_blank'>Crash Log file #2</a><br></body></html>");
 }
 
-void serverSendContent(ESP8266WebServer& server, const String& fileName)
+void serverSendContent(ESP8266WebServer &server, const String &fileName)
 {
-    // open the file in reading mode
-    File theLogFile = SPIFFS.open(fileName, "r");
+  // open the file in reading mode
+  File theLogFile = SPIFFS.open(fileName, "r");
 
-    // get the size of the file
-    size_t _crashFileSize = theLogFile.size();
-    theLogFile.close();
+  // get the size of the file
+  size_t _crashFileSize = theLogFile.size();
+  theLogFile.close();
 
-    // get free heap/RAM of the system
-    uint32_t _ulFreeHeap = system_get_free_heap_size();
+  // get free heap/RAM of the system
+  uint32_t _ulFreeHeap = system_get_free_heap_size();
 
-    // check if file size is smaller than available RAM
-    if (_ulFreeHeap > (_crashFileSize + 1)) {
-        // create buffer for file content with the size of the file+1
-        char* _crashFileContent;
-        _crashFileContent = reinterpret_cast<char*>(malloc(_crashFileSize + 1));
+  // check if file size is smaller than available RAM
+  if (_ulFreeHeap > (_crashFileSize + 1))
+  {
+    // create buffer for file content with the size of the file+1
+    std::vector<char> _crashFileContent(_crashFileSize + 1);
+    memset(_crashFileContent.data(), 0, _crashFileSize + 1);
 
-        // read the file content to the buffer
-        SaveCrashSpiffs.readFile(fileName.c_str(), _crashFileContent, _crashFileSize + 1);
-        server.send(200, "text/plain", _crashFileContent);
-
-        // free the allocated space
-        free(_crashFileContent);
-    } else {
-        String _errorContent = "507: Insufficient Storage. Error reading file '";
-        _errorContent += fileName + "' to buffer.";
-        _errorContent += String(_ulFreeHeap) + " byte of RAM is not enough to read " + String(_crashFileSize) + " byte of file content";
-        server.send(507, "text/plain", _errorContent);
-    }
+    // read the file content to the buffer
+    SaveCrashSpiffs.readFile(fileName.c_str(), _crashFileContent.data(), _crashFileSize + 1);
+    server.setContentLength(_crashFileSize);
+    server.send(200, PSTR("text/plain"), _crashFileContent.data());
+  }
+  else
+  {
+    String _errorContent = "507: Insufficient Storage. Error reading file '";
+    _errorContent += fileName + "' to buffer.";
+    _errorContent += String(_ulFreeHeap) + " byte of RAM is not enough to read " + String(_crashFileSize) + " byte of file content";
+    server.send(507, PSTR("text/plain"), _errorContent);
+  }
 }
 /**
  * @brief      Handle access on log page
  */
 void handleLog()
 {
-    serverSendContent(server, SaveCrashSpiffs.getLastCrashLogFilePath());
+  serverSendContent(server, SaveCrashSpiffs.getLastCrashLogFilePath());
 }
 
 /**
@@ -302,13 +304,12 @@ void handleFilePath()
   // if parameter is empty
   if (server.arg("path") == "")
   {
-    server.send(404, "text/plain", "Path argument not found");
+    server.send(404, PSTR("text/plain"), "Path argument not found");
   }
   else
   {
-      serverSendContent(server, server.arg("path"));
+    serverSendContent(server, server.arg("path"));
   }
-     
 }
 
 /**
@@ -318,14 +319,14 @@ void handleFilePath()
  */
 void handleListFiles()
 {
-    String pageContent = "<html><body>List of crash logs<br>";
-    SaveCrashSpiffs.iterateCrashLogFiles([&](uint32_t fileNumber, const char* fileName) {
-      const String fn = fileName;
-        pageContent += "<a href='/file?path=" + fn + "' target='_blank'>"+fn+"</a><br>";
-    });
-    pageContent += "</body></html>";
-    // serve the page
-    server.send(200, "text/html", pageContent);
+  String pageContent = "<html><body>List of crash logs<br>";
+  SaveCrashSpiffs.iterateCrashLogFiles([&](uint32_t fileNumber, const char *fileName) {
+    const String fn = fileName;
+    pageContent += "<a href='/file?path=" + fn + "' target='_blank'>" + fn + "</a><br>";
+  });
+  pageContent += "</body></html>";
+  // serve the page
+  server.send(200, "text/html", pageContent);
 }
 
 /**
@@ -346,5 +347,5 @@ void handleNotFound()
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
 
-  server.send(404, "text/plain", message);
+  server.send(404, PSTR("text/plain"), message);
 }
