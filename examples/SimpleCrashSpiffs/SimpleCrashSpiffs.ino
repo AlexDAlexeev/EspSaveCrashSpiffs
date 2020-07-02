@@ -1,6 +1,6 @@
 /*
   Example application to show how to save crash information
-  to ESP8266's flash using EspSaveCrashSpiffs library
+  to ESP8266's flash using EspSaveCrashFs library
   Please check repository below for details
 
   Repository: https://github.com/brainelectronics/EspSaveCrashSpiffs
@@ -41,7 +41,7 @@ extern "C" {
 }
 
 // include custom lib for this example
-#include "EspSaveCrashSpiffs.h"
+#include "EspSaveCrashFs.h"
 
 // include Arduino Filesystem lib
 #include <FS.h>

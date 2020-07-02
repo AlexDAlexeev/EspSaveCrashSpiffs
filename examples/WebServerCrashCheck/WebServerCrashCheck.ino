@@ -39,7 +39,7 @@ extern "C"
 }
 
 // include custom lib for this example
-#include "EspSaveCrashSpiffs.h"
+#include "EspSaveCrashFs.h"
 
 // include Arduino libs
 #include <FS.h>
@@ -53,7 +53,7 @@ extern "C"
 // file might be tracked with gitignore
 #include "wifiConfig.h"
 
-// use the default file name defined in EspSaveCrashSpiffs.h
+// use the default file name defined in EspSaveCrashFs.h
 ESP8266WebServer server(80);
 
 ESP8266WiFiMulti WiFiMulti;

@@ -1,12 +1,12 @@
 {
-    "name": "EspSaveCrashSpiffs",
-    "version": "0.1.0",
+    "name": "EspSaveCrashFs",
+    "version": "0.1.1",
     "keywords": "crash, exception, restart, software WDT, diagnostics",
     "description": "Automatically saves exception details and stack trace to SPI flash in case of ESP8266 crash.",
     "repository":
     {
         "type": "git",
-        "url": "https://github.com/brainelectronics/EspSaveCrashSpiffs.git"
+        "url": "https://github.com/AlexDAlexeev/EspSaveCrashSpiffs"
     },
     "exclude": "extras",
     "frameworks": "arduino",

@@ -1,12 +1,12 @@
-# EspSaveCrashSpiffs
-<!-- [![Build Status](https://travis-ci.org/brainelectronics/EspSaveCrashSpiffs.svg?branch=master)](https://travis-ci.org/brainelectronics/EspSaveCrashSpiffs) -->
+# EspSaveCrashFs
+<!-- [![Build Status](https://travis-ci.org/brainelectronics/EspSaveCrashFs.svg?branch=master)](https://travis-ci.org/brainelectronics/EspSaveCrashFs) -->
 
 Save exception details and stack trace to SPIFFS everytime the ESP8266 crashes. Implement it in your sketch in two simple steps.
 
 
 ## Overview
 
-EspSaveCrashSpiffs is another handy little library that will keep automatically catching and saving crash information to ESP8266 module's flash in case it fails due to exception or software WDT. You will then be able to analyze the crash log and decode the stack trace using [ESP Exception Decoder](https://github.com/me-no-dev/EspExceptionDecoder).
+EspSaveCrashFs is another handy little library that will keep automatically catching and saving crash information to ESP8266 module's flash in case it fails due to exception or software WDT. You will then be able to analyze the crash log and decode the stack trace using [ESP Exception Decoder](https://github.com/me-no-dev/EspExceptionDecoder).
 
 This library is inspired by the [EspSaveCrash library](https://github.com/krzychb/EspSaveCrash) written by [krzychb](https://github.com/krzychb).
 
@@ -14,12 +14,12 @@ You will implement it in your sketch in two simple steps:
 
 1. Include the library
   ```cpp
-  #include "EspSaveCrashSpiffs.h"
+  #include "EspSaveCrashFs.h"
   ```
 
 2. Declare object
   ```cpp
-EspSaveCrashSpiffs SaveCrashSpiffs(0);
+EspSaveCrashFs SaveCrash(0);
 ```
 
 That's it.
@@ -63,7 +63,7 @@ epc1=0x4020161a epc2=0x00000000 epc3=0x00000000 excvaddr=0x00000000 depc=0x00000
 The browser output looks like that:
 ![alt text](extras/crash-info-in-web-browser.png "Sample crash information in a web browser")
 
-To delete existing crash files from the flash refer to the `deleteSomeFile()` function in the [SimpleCrashSpiffs](https://github.com/brainelectronics/EspSaveCrashSpiffs/blob/master/examples/SimpleCrashSpiffs/SimpleCrashSpiffs.ino) example.
+To delete existing crash files from the flash refer to the `deleteSomeFile()` function in the [SimpleCrashSpiffs](https://github.com/brainelectronics/EspSaveCrashFs/blob/master/examples/SimpleCrashSpiffs/SimpleCrashSpiffs.ino) example.
 
 Check the examples folder for sample implementation of this library and tracking down where the program crash happened. Also an example to show how to access to latest saved information remotely with a web browser.
 
@@ -90,7 +90,7 @@ Check the examples folder for sample implementation of this library and tracking
 
 ## Examples
 
-Library comes with [example sketches](https://github.com/brainelectronics/EspSaveCrashSpiffs/tree/master/examples) that let you trigger some exceptions and see how to visualize saved data.
+Library comes with [example sketches](https://github.com/brainelectronics/EspSaveCrashFs/tree/master/examples) that let you trigger some exceptions and see how to visualize saved data.
 
 <!-- Please check separate section [how to use example sketches](examples.md) and what particular functionality they provide. -->
 

@@ -1,12 +1,12 @@
 ###########################################
-# Syntax Coloring Map For EspSaveCrashSpiffs
+# Syntax Coloring Map For EspSaveCrashFs
 ###########################################
 
 ###########################################
 # Datatypes (KEYWORD1)
 ###########################################
 
-EspSaveCrashSpiffs	KEYWORD1
+EspSaveCrashFs	KEYWORD1
 
 ###########################################
 # Methods and Functions (KEYWORD2)

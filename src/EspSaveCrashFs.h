@@ -3,9 +3,9 @@
   and stack trace to flash in case of ESP8266 crash.
   Please check repository below for details
 
-  Repository: https://github.com/AlexDAlexeev/EspSaveCrashSpiffs
-  File: EspSaveCrashSpiffs.h
-  Revision: 0.1.0
+  Repository: https://github.com/AlexDAlexeev/EspSaveCrashFs
+  File: EspSaveCrashFs.h
+  Revision: 0.1.1
   Date: 20-Feb-2020
   Author: Alex.D.Alexeev
 
@@ -44,14 +44,19 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#ifndef _ESPSAVECRASHSPIFFS_H_
-#define _ESPSAVECRASHSPIFFS_H_
+#ifndef _EspSaveCrashFs_H_
+#define _EspSaveCrashFs_H_
 
 #pragma once
 
 #include "Arduino.h"
-#include "FS.h"
 #include "user_interface.h"
+
+#ifndef ESPSAVECRASH_SPIFFS
+#include "LittleFs.h"
+#else
+#include "FS.h"
+#endif
 
 // define the usage of SPIFFS crash log before anything else
 // #define SPIFFS_CRASH_LOG  1
@@ -82,11 +87,15 @@
 #define DEFAULT_CRASHFILESUFFIX PSTR(".log")
 #endif
 
-class EspSaveCrashSpiffs {
+class EspSaveCrashFs {
 public:
     typedef std::function<void(uint32_t fileNumber, const char* fileName)> OnCrashLogFileFound;
 
-    EspSaveCrashSpiffs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = SPIFFS);
+#ifndef ESPSAVECRASH_SPIFFS
+    EspSaveCrashFs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = SPIFFS);
+#else
+    EspSaveCrashFs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = LittleFS);
+#endif
 
     const String& getLogFileDirectory() const { return _fileDirectory; }
     const String& getLogFilePrefix() const { return _filePrefix; }
@@ -123,6 +132,6 @@ private:
     uint32_t _getNumberOfNameMatch(const String& fileName);
 };
 
-extern EspSaveCrashSpiffs SaveCrashSpiffs;
+extern EspSaveCrashFs SaveCrashSpiffs;
 
 #endif
