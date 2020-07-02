@@ -92,9 +92,9 @@ public:
     typedef std::function<void(uint32_t fileNumber, const char* fileName)> OnCrashLogFileFound;
 
 #ifndef ESPSAVECRASH_SPIFFS
-    EspSaveCrashFs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = SPIFFS);
-#else
     EspSaveCrashFs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = LittleFS);
+#else
+    EspSaveCrashFs(const String& directory = "", const String& prefix = "", const String& suffix = "", FS& fs = SPIFFS);
 #endif
 
     const String& getLogFileDirectory() const { return _fileDirectory; }
