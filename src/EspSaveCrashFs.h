@@ -53,7 +53,7 @@
 #include "user_interface.h"
 
 #ifndef ESPSAVECRASH_SPIFFS
-#include <LittleFs.h>
+#include <LittleFS.h>
 #else
 #include "FS.h"
 #endif
